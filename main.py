@@ -14,7 +14,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-    screen.fill((94, 129, 162))
+    screen.fill(('black'))
     level.run()
 
     pygame.display.update()

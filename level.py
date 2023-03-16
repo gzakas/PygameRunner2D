@@ -24,7 +24,7 @@ class Level:
                     tile = Tile((x, y), tile_size)
                     self.tiles.add(tile)
                 if cell == 'P':
-                    player_sprite = Player((x, y))
+                    player_sprite = Player((x, y), self.display_surface)
                     self.player.add(player_sprite)
 
     def scroll_x(self):
@@ -49,13 +49,14 @@ class Level:
         for sprite in self.tiles.sprites():
             if sprite.rect.colliderect(player.rect):
                 if player.direction.x < 0:
-                    player.rect.left = sprite.rect.right
+                    player.rect.left = sprite.rect.right + 1.5
                     player.on_left = True
                     self.current_x = player.rect.left
                 elif player.direction.x > 0:
-                    player.rect.right = sprite.rect.left
+                    player.rect.right = sprite.rect.left - 1.5
+                    player.direction.x = 0
                     player.on_right = True
-                    self.current_x = sprite.rect.right
+                    self.current_x = sprite.rect.right 
 
         if player.on_left and (player.rect.left < self.current_x or player.direction.x >= 0):
             player.on_left = False
