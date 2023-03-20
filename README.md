@@ -1,2 +1,2 @@
-# PygameShooter
-2D Shooter
+# PygameRunner
+2D Runner game with pygame library
