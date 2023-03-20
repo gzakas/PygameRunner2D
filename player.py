@@ -20,7 +20,7 @@ class Player(pygame.sprite.Sprite):
         # player movement
         self.direction = pygame.math.Vector2(0, 0)
         self.speed = 5
-        self.gravity = 0.8
+        self.gravity = 0.7
         self.jump_speed = -17
 
         # player status
@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
         self.on_left = False
         self.on_right = False
 
-    def import_character_assets(self, scale_factor=0.13):
+    def import_character_assets(self, scale_factor=0.1):
         character_path = 'sprites/character/'
         self.animations = {'idle': [], 'run': [], 'jump': [], 'fall': [], 'death': [], 'shoot': []}
 
@@ -112,8 +112,6 @@ class Player(pygame.sprite.Sprite):
                 self.status = 'run'
             else:
                 self.status = 'idle'
-
-        
 
     def apply_gravity(self):
         self.direction.y += self.gravity
