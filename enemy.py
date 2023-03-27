@@ -6,7 +6,7 @@ class Enemy(AnimatedTile):
     def __init__(self, size, x, y):
         super().__init__(size, x, y, 'sprites/enemy/minotaur1/walking', 1.4)
         self.rect.y += size - self.image.get_size()[(1)] + 4
-        self.speed = randint(3, 5)
+        self.speed = randint(1, 3)
 
     def reverse_image(self):
         if self.speed < 0:

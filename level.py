@@ -7,14 +7,21 @@ from support import import_csv_layout, import_cut_graphics
 from enemy import Enemy
 from decoration import Sky, Water, Clouds
 from game_data import levels
+from pause import Pause
 
 class Level:
-    def __init__(self, current_level, surface, create_overworld, change_coins, change_health):
+    def __init__(self, current_level, surface, create_overworld, change_coins, reset_coins, change_health, game, game_instance, user_id):
 
         # level setup
         self.display_surface = surface
         self.world_shift = 0
         self.current_x = None
+        self.current_x_pos = 0
+        self.game_instance = game_instance
+        self.game = game_instance
+        self.user_id = user_id
+        self.pause_menu = Pause(surface, self, game_instance, self.resume_level, self.return_to_overworld, self.return_to_overworld)
+        self.level_complete_sound = pygame.mixer.Sound('sounds/level_complete.wav')
 
         # overworld conn
         self.create_overworld = create_overworld
@@ -30,11 +37,12 @@ class Level:
 
         # user interface
         self.change_coins = change_coins
+        self.reset_coins = reset_coins
 
         # dust
         self.dust_sprite = pygame.sprite.GroupSingle()
         self.player_on_ground = False
-
+        
         # kill particles
         self.kill_sprites = pygame.sprite.Group()
 
@@ -53,6 +61,7 @@ class Level:
         # coins
         coin_layout = import_csv_layout(level_data['coins'])
         self.coin_sprites = self.create_tile_group(coin_layout, 'coins')
+        self.coin_sound = pygame.mixer.Sound('sounds/pickupCoin.wav')
 
         # bg_trees
         tree_layout = import_csv_layout(level_data['bg trees'])
@@ -61,6 +70,8 @@ class Level:
         # enemy
         enemy_layout = import_csv_layout(level_data['enemies'])
         self.enemy_sprites = self.create_tile_group(enemy_layout, 'enemies')
+        self.enemy_hurt_sound = pygame.mixer.Sound('sounds/hitHurt.wav')
+        self.enemy_kill_sound = pygame.mixer.Sound('sounds/enemyKill.wav')
 
         # constraint
         constraint_layout = import_csv_layout(level_data['constraints'])
@@ -71,6 +82,12 @@ class Level:
         level_width = len(terrain_layout[0]) * tile_size
         self.water = Water(screen_height - 25, level_width)
         self.clouds = Clouds(300, level_width, 25)
+
+    def resume_level(self):
+        self.game_instance.set_menu_status()
+
+    def return_to_overworld(self):
+        self.create_overworld(self.current_level, self.new_max_level, self.user_id)
 
     def create_tile_group(self, layout, type):
         sprite_group = pygame.sprite.Group()
@@ -165,13 +182,16 @@ class Level:
         player = self.player.sprite
         player_x = player.rect.centerx
         direction_x = player.direction.x
+        
 
         if player_x < screen_width / 4 and direction_x < 0:
             self.world_shift = 5
             player.speed = 0
-        elif player_x > screen_width - (screen_width / 4) and direction_x > 0:
+            self.current_x_pos -= 1
+        elif player_x > screen_width - (screen_width / 4) and direction_x > 0 and self.current_x_pos < 510:
             self.world_shift = -5
-            player.speed = 0
+            player.speed = 0     
+            self.current_x_pos += 1
         else:
             self.world_shift = 0
             player.speed = 5
@@ -202,11 +222,11 @@ class Level:
         for sprite in collidable_sprites:
             if sprite.rect.colliderect(player.collision_rect):
                 if player.direction.y > 0:
-                    player.collision_rect.bottom = sprite.rect.top - 1.5
+                    player.collision_rect.bottom = sprite.rect.top 
                     player.direction.y = 0
                     player.on_ground = True
                 elif player.direction.y < 0:
-                    player.collision_rect.top = sprite.rect.bottom + 1.5
+                    player.collision_rect.top = sprite.rect.bottom 
                     player.direction.y = 0
                     player.on_ceiling = True
 
@@ -215,17 +235,20 @@ class Level:
 
     def check_death(self):
         if self.player.sprite.rect.top > screen_height:
-            self.create_overworld(self.current_level, 0)
+            self.game_instance.current_health = 0
+            self.game_instance.check_game_over()
 
     def check_win(self):
         if pygame.sprite.spritecollide(self.player.sprite, self.goal, False):
-            self.create_overworld(self.current_level, self.new_max_level)
+            self.game.move_to_next_level()
+            self.level_complete_sound.play()
 
     def check_coin_collisions(self):
         collided_coins = pygame.sprite.spritecollide(self.player.sprite, self.coin_sprites, True)
         if collided_coins:
             for coin in collided_coins:
                 self.change_coins(coin.value)
+                self.coin_sound.play()
 
     def check_enemy_collisions(self):
         enemy_collisions = pygame.sprite.spritecollide(self.player.sprite, self.enemy_sprites, False)
@@ -239,19 +262,22 @@ class Level:
                     kill_sprite = ParticleEffect(enemy.rect.center, 'kill')
                     self.kill_sprites.add(kill_sprite)
                     enemy.kill()
+                    self.enemy_kill_sound.play()
                 else:
                     self.player.sprite.get_damage()
+                    self.enemy_hurt_sound.play()
 
-    def run(self):
+    def update(self):
+
         # background
         self.sky.draw(self.display_surface)
         self.clouds.draw(self.display_surface, self.world_shift)
-        
+            
         # dust particles
         self.dust_sprite.update(self.world_shift)
         self.dust_sprite.draw(self.display_surface)
 
-        # terrain
+         # terrain
         self.terrain_sprites.update(self.world_shift)
         self.terrain_sprites.draw(self.display_surface)
 
@@ -270,11 +296,11 @@ class Level:
         # crates
         self.crate_sprites.update(self.world_shift)
         self.crate_sprites.draw(self.display_surface)
-        
+            
         # grass
         self.grass_sprites.update(self.world_shift)
         self.grass_sprites.draw(self.display_surface)
-        
+            
         # coins
         self.coin_sprites.update(self.world_shift)
         self.coin_sprites.draw(self.display_surface)

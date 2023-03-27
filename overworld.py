@@ -2,6 +2,8 @@ import pygame
 from game_data import levels
 from support import import_folder
 from decoration import Sky
+from menu import Menu
+from pause import Pause
 
 class Node(pygame.sprite.Sprite):
 	def __init__(self,pos,status,icon_speed, path):
@@ -36,20 +38,23 @@ class Icon(pygame.sprite.Sprite):
 		super().__init__()
 		self.pos = pos
 		self.image = pygame.Surface((20,20))
-		self.image = pygame.image.load('sprites/overworld/viking.png').convert_alpha()
+		self.image = pygame.image.load('sprites/overworld/character.png').convert_alpha()
 		self.rect = self.image.get_rect(center = pos)
 
 	def update(self):
 		self.rect.center = self.pos
 
+
 class Overworld:
-	def __init__(self,start_level,max_level,surface,create_level):
+	def __init__(self,start_level,max_level,surface,create_level, game, user_id):
 
 		# setup 
 		self.display_surface = surface 
 		self.max_level = max_level
 		self.current_level = start_level
 		self.create_level = create_level
+		self.game = game
+		self.user_id = user_id
 
 		# movement logic
 		self.moving = False
@@ -66,6 +71,16 @@ class Overworld:
 		self.allow_input = False
 		self.timer_length = 500
 
+		# menu
+		self.menu = Menu(surface, "Paused", ['Resume', 'Quit'], self.resume_overworld, [self.resume_overworld, self.return_to_menu], self.user_id)
+		self.overworld_pause = Pause(surface, self, self.game, self.resume_overworld, self.return_to_menu, self.game.quit_game)
+
+	def resume_overworld(self):
+		self.overworld_pause.update_paused_state(False)
+
+	def return_to_menu(self):
+		self.game.create_menu()
+		self.overworld_pause.update_paused_state(False)
 
 	def setup_nodes(self):
 		self.nodes = pygame.sprite.Group()
@@ -99,8 +114,11 @@ class Overworld:
 				self.move_direction = self.get_movement_data('previous')
 				self.current_level -= 1
 				self.moving = True
-			elif keys[pygame.K_SPACE]:
+			elif keys[pygame.K_RETURN]:
 				self.create_level(self.current_level)
+			elif keys[pygame.K_ESCAPE]:
+				self.overworld_pause.is_paused = True
+				self.overworld_pause.run()
 
 	def get_movement_data(self,target):
 		start = pygame.math.Vector2(self.nodes.sprites()[self.current_level].rect.center)
@@ -128,7 +146,9 @@ class Overworld:
 
 	def run(self):
 		self.input_timer()
-		self.input()
+		result = self.input()
+		if result == 'menu':
+			return 'menu'
 		self.update_icon_pos()
 		self.icon.update()
 		self.nodes.update()
@@ -136,3 +156,6 @@ class Overworld:
 		self.draw_paths()
 		self.nodes.draw(self.display_surface)
 		self.icon.draw(self.display_surface)
+		if self.overworld_pause.is_paused:
+			self.overworld_pause.run()
+

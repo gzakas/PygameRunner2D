@@ -40,9 +40,12 @@ class Player(pygame.sprite.Sprite):
         self.invincibility_duration = 550
         self.hurt_time = 0
 
-    def import_character_assets(self, scale_factor=0.1):
+        # sounds
+        self.jump_sound = pygame.mixer.Sound('sounds/jump.wav')
+
+    def import_character_assets(self, scale_factor=0.3):
         character_path = 'sprites/character/'
-        self.animations = {'idle': [], 'run': [], 'jump': [], 'fall': [], 'death': [], 'shoot': []}
+        self.animations = {'idle': [], 'run': [], 'jump': [], 'fall': [], 'death': []}
 
         for animation in self.animations.keys():
             full_path = character_path + animation
@@ -105,6 +108,7 @@ class Player(pygame.sprite.Sprite):
 
         if keys[pygame.K_SPACE] and self.on_ground:
             self.jump()
+            self.jump_sound.play()
             self.create_jump_particles(self.rect.midbottom)
 
     def get_status(self):
