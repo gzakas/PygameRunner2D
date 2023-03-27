@@ -28,7 +28,7 @@ class Pause:
             self.surface.blit(option_surface, (x, y))
 
     def return_to_menu(self):
-        self.game.create_menu()
+        self.game.create_menu(self.game.user_id)
         self.update_paused_state(False)
 
     def update_paused_state(self, new_state):

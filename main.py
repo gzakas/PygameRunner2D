@@ -218,7 +218,7 @@ class Game:
 		elif self.status == 'overworld':
 			self.overworld.run()
 		elif self.status == 'menu':
-			self.create_menu()
+			self.create_menu(self.user_id)
 		elif self.status == 'pause':
 			pause_menu = Pause(screen, self)
 			pause_menu.run()
