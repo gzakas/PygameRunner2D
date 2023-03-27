@@ -51,7 +51,8 @@ class Menu:
                         self.sound.play()
                     if event.key == pygame.K_RETURN:
                         if self.selected == 0:
-                            return self.create_overworld(0, 0, self.user_id)
+                            _, max_level = get_user_highscore_and_level(self.user_id)
+                            return self.create_overworld(0, max_level, self.user_id)
                         elif self.selected == 1:
                             print('Options')
                         elif self.selected == 2:

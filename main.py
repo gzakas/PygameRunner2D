@@ -102,10 +102,9 @@ class Game:
 	def create_overworld(self, current_level, new_max_level, user_id):
 		self.user_id = user_id
 		highscore, max_level = get_user_highscore_and_level(self.user_id)
-		if new_max_level > self.max_level:
-			self.max_level = new_max_level
-			self.max_level = max_level
-			self.highscore = highscore
+		self.max_level = max(self.max_level, new_max_level)
+
+		self.highscore = highscore
 		self.overworld = Overworld(current_level, self.max_level, screen, self.create_level, self, self.user_id)
 		self.status = 'overworld'
 
@@ -122,7 +121,8 @@ class Game:
 		self.menu.run()
 
 	def start_game(self):
-		self.create_overworld(0, 0, self.user_id)
+		highscore, max_level = get_user_highscore_and_level(self.user_id)
+		self.create_overworld(max_level, max_level, self.user_id)
 
 	def show_options(self):
 		print('Options')
@@ -142,9 +142,11 @@ class Game:
 		self.current_health += amount
 
 	def move_to_next_level(self):
-		update_user_highscore_and_level(self.user_id, self.coins, self.max_level)
 		self.current_level += 1
-		self.create_level(self.current_level)
+		self.max_level = max(self.max_level, self.current_level)
+		highscore = max(self.highscore, self.coins)
+		update_user_highscore_and_level(self.user_id, highscore, self.max_level)
+		self.create_overworld(self.current_level, self.max_level, self.user_id)
 
 	def check_game_over(self):
 		if self.current_health <= 0:
@@ -161,18 +163,19 @@ class Game:
 		self.current_health = 100
 		self.coins = 0
 		self.status = 'menu'
+		self.create_menu()
 
 	def handle_key_events(self, event):
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_ESCAPE:
 				if self.status == 'level':
-					self.level.pause_menu.run()
+					self.level.handle_input(event)
 				elif self.status == 'overworld':
 					self.create_menu()
 
-
 	def run(self):
-		for event in pygame.event.get():
+		events = pygame.event.get()
+		for event in events:
 			self.handle_key_events(event)
 			if event.type == pygame.QUIT:
 				pygame.quit()
@@ -190,7 +193,7 @@ class Game:
 		elif self.status == 'highscores':
 			self.show_highscores()
 		elif self.status == 'level':
-			self.level.update()
+			self.level.update(events)
 			self.ui.show_health(self.current_health, self.max_health)
 			self.ui.show_coins(self.coins)
 			self.check_game_over()

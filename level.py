@@ -84,7 +84,7 @@ class Level:
         self.clouds = Clouds(300, level_width, 25)
 
     def resume_level(self):
-        self.game_instance.set_menu_status()
+        self.pause_menu.update_paused_state(False)
 
     def return_to_overworld(self):
         self.create_overworld(self.current_level, self.new_max_level, self.user_id)
@@ -267,7 +267,14 @@ class Level:
                     self.player.sprite.get_damage()
                     self.enemy_hurt_sound.play()
 
-    def update(self):
+    def handle_input(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.pause_menu.update_paused_state(True)
+            self.pause_menu.run()
+
+    def update(self, events):
+        for event in events:
+            self.handle_input(event)
 
         # background
         self.sky.draw(self.display_surface)

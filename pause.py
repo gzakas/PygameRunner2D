@@ -43,13 +43,13 @@ class Pause:
             self.options_colors[self.selected] = 'gold'
             self.options_colors[self.selected + 1] = 'white'
         elif keys[pygame.K_RETURN]:
-            if self.selected == 0:  # Resume
+            if self.selected == 0:
                 self.resume_function()
                 self.is_paused = False
-            elif self.selected == 1:  # Main Menu
+            elif self.selected == 1:
                 self.main_menu_function()
                 self.is_paused = False
-            elif self.selected == 2:  # Quit
+            elif self.selected == 2:
                 pygame.quit()
                 sys.exit()
 
