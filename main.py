@@ -12,6 +12,7 @@ from database import create_database, get_user_highscore_and_level, update_user_
 
 create_database()
 
+
 class Game:
 	def __init__(self):
 
@@ -22,6 +23,7 @@ class Game:
 		self.coins = 0
 		self.menu = None
 		self.current_level = 0
+		self.last_unlocked_level = 0
 
 		# user interface
 		self.ui = UI(screen)
@@ -84,25 +86,48 @@ class Game:
 			self.overworld.resume_overworld()
 
 	def create_pause_menu(self, screen):
-		self.pause = Pause(screen, self, self, self.resume_game, self.return_to_menu, self.quit_game)
+		self.pause = Pause(screen, self, self, self.resume_game, self.create_menu_from_pause, self.quit_game)
 		self.status = 'pause'
 
-	def create_level(self,current_level):
+	def create_menu_from_pause(self):
+		self.create_menu(self.user_id, False, False)
+
+
+	def create_level(self,current_level, completed=False):
 		self.level = Level(current_level, screen, self.create_overworld, self.change_coins, self.reset_coins, self.change_health, self, self, self.user_id)
 		self.status = 'level'
 
 	def create_registration(self):
-		registration = Registration(screen, "Register", self.create_login, self.create_selection_menu)
+		registration = Registration(screen, "Register", self.create_menu_new_account, self.create_login, self.create_selection_menu)
 		registration.run()
 
 	def create_login(self):
-		login = Login(screen, "Login", lambda user_id: self.create_menu(user_id), self.create_registration, self.create_selection_menu)
+		login = Login(screen, "Login", self.create_menu_existing_account, self.create_registration, self.create_selection_menu)
 		login.run()
 
-	def create_overworld(self, current_level, new_max_level, user_id):
+	def create_menu_new_account(self, user_id):
+		menu_options = ["Play", "Options", "Quit"]
+		option_functions = [self.create_overworld, None, self.quit_game]
+		menu = Menu(screen, "Main Menu", menu_options, self.create_overworld, option_functions, user_id, is_new_account=True)
+		menu.run()
+
+	def create_menu_existing_account(self, user_id, is_new_account):
+		menu_options = ["Play", "Options", "Exit"]
+		option_functions = [self.create_overworld, None, self.quit_game]
+		menu = Menu(screen, "Main Menu", menu_options, self.create_overworld, option_functions, user_id, is_new_account)
+		menu.run()
+
+	def create_overworld(self, current_level, max_level, user_id, completed=False):
 		self.user_id = user_id
 		highscore, max_level = get_user_highscore_and_level(self.user_id)
-		self.max_level = max(self.max_level, new_max_level)
+		if completed and current_level == max_level:
+			self.max_level += 1
+			self.last_unlocked_level = self.max_level
+			update_user_highscore_and_level(self.user_id, highscore, self.max_level)
+		else:
+			self.max_level = max_level
+		if current_level is not None and current_level > self.max_level:
+			current_level = self.max_level
 
 		self.highscore = highscore
 		self.overworld = Overworld(current_level, self.max_level, screen, self.create_level, self, self.user_id)
@@ -114,15 +139,22 @@ class Game:
 		highscores_screen.run()
 		self.status = 'highscores'
 
-	def create_menu(self, user_id=None):
+	def create_menu(self, user_id=None, new_account=False, reset_progress=False):
 		self.user_id = user_id
+		print(user_id)
+		if new_account:
+			self.max_level = 0
+		if reset_progress:
+			self.max_level = 0
 		self.menu = Menu(screen, "Menu", ['Start', 'Options', 'Quit'], self.create_overworld, [self.start_game, self.show_options, self.quit_game], self.user_id)
 		self.status = 'menu'
 		self.menu.run()
 
 	def start_game(self):
-		highscore, max_level = get_user_highscore_and_level(self.user_id)
-		self.create_overworld(max_level, max_level, self.user_id)
+		_, max_level = get_user_highscore_and_level(self.user_id)
+		if max_level > self.max_level:
+			self.max_level = max_level
+		self.create_overworld(self.last_unlocked_level, self.max_level, self.user_id)
 
 	def show_options(self):
 		print('Options')
@@ -143,6 +175,7 @@ class Game:
 
 	def move_to_next_level(self):
 		self.current_level += 1
+		self.last_unlocked_level = max(self.last_unlocked_level, self.current_level)
 		self.max_level = max(self.max_level, self.current_level)
 		highscore = max(self.highscore, self.coins)
 		update_user_highscore_and_level(self.user_id, highscore, self.max_level)
@@ -163,7 +196,6 @@ class Game:
 		self.current_health = 100
 		self.coins = 0
 		self.status = 'menu'
-		self.create_menu()
 
 	def handle_key_events(self, event):
 		if event.type == pygame.KEYDOWN:
@@ -171,7 +203,7 @@ class Game:
 				if self.status == 'level':
 					self.level.handle_input(event)
 				elif self.status == 'overworld':
-					self.create_menu()
+					self.create_menu(self.user_id)
 
 	def run(self):
 		events = pygame.event.get()
@@ -187,7 +219,7 @@ class Game:
 			self.overworld.run()
 		elif self.status == 'menu':
 			self.create_menu()
-		elif self.status == 'paused':
+		elif self.status == 'pause':
 			pause_menu = Pause(screen, self)
 			pause_menu.run()
 		elif self.status == 'highscores':

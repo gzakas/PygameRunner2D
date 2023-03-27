@@ -1,13 +1,14 @@
 import pygame, sys
 from settings import *
 
+
 class Pause:
-    def __init__(self, surface, game, game_instance, resume_function, main_menu_function, quit_function):
+    def __init__(self, surface, game, game_instance, resume_function, create_menu_function, quit_function):
         self.surface = surface
         self.game = game
         self.game_instance = game_instance
         self.resume_function = resume_function
-        self.main_menu_function = main_menu_function
+        self.create_menu_function = create_menu_function
         self.quit_function = quit_function
         self.is_paused = False
         self.font = pygame.font.Font('sprites/ui/ARCADEPI.ttf', 50)
@@ -25,6 +26,10 @@ class Pause:
             x = self.surface.get_width() // 2 - option_surface.get_width() // 2
             y = self.surface.get_height() // 2 - option_surface.get_height() // 2 + 70 * index
             self.surface.blit(option_surface, (x, y))
+
+    def return_to_menu(self):
+        self.game.create_menu()
+        self.update_paused_state(False)
 
     def update_paused_state(self, new_state):
         self.is_paused = new_state
@@ -47,7 +52,7 @@ class Pause:
                 self.resume_function()
                 self.is_paused = False
             elif self.selected == 1:
-                self.main_menu_function()
+                self.create_menu_function()
                 self.is_paused = False
             elif self.selected == 2:
                 pygame.quit()

@@ -2,11 +2,13 @@ import pygame, sys
 from settings import *
 from database import register_user, login_user
 
+
 class Registration:
-    def __init__(self, screen, title, create_menu, create_selection_menu):
+    def __init__(self, screen, title, create_menu_new_account, create_login, create_selection_menu):
         self.screen = screen
         self.title = title
-        self.create_menu = create_menu
+        self.create_menu_new_account = create_menu_new_account
+        self.create_login = create_login
         self.create_selection_menu = create_selection_menu
         self.error_message = ""
         self.font = pygame.font.Font('sprites/ui/ARCADEPI.ttf', 50)
@@ -56,9 +58,9 @@ class Registration:
                         if self.focus == "username":
                             self.focus = "password"
                         elif self.focus == "password":
-                            result = register_user(self.username_input, self.password_input)
+                            result, user_id = register_user(self.username_input, self.password_input)
                             if result:
-                                self.create_menu()
+                                self.create_menu_new_account(user_id)
                                 running = False
                             else:
                                 self.error_message = "Username already exists"
@@ -87,10 +89,10 @@ class Registration:
 
 
 class Login:
-    def __init__(self, screen, title, create_menu_with_user_id, create_registration, create_selection_menu):
+    def __init__(self, screen, title, create_menu_existing_account, create_registration, create_selection_menu):
         self.screen = screen
         self.title = title
-        self.create_menu_with_user_id = create_menu_with_user_id
+        self.create_menu_existing_account = create_menu_existing_account
         self.create_registration = create_registration
         self.create_selection_menu = create_selection_menu
         self.error_message = ""
@@ -110,7 +112,6 @@ class Login:
     def draw_error_message(self, message):
         error_message_surface = self.font2.render(message, True, (255, 0, 0))
         self.screen.blit(error_message_surface, (screen_width / 2 - error_message_surface.get_size()[0] / 2, 550))
-
 
     def draw(self):
         self.screen.blit(self.background, (0, 0))
@@ -143,7 +144,7 @@ class Login:
                         authenticated, user_id = login_user(self.username_input, self.password_input)
 
                         if authenticated:
-                            self.create_menu_with_user_id(user_id)
+                            self.create_menu_existing_account(user_id, False)
                             return
                         else:
                             self.error_message = "Incorrect login credentials. Please try again."

@@ -9,6 +9,7 @@ from decoration import Sky, Water, Clouds
 from game_data import levels
 from pause import Pause
 
+
 class Level:
     def __init__(self, current_level, surface, create_overworld, change_coins, reset_coins, change_health, game, game_instance, user_id):
 
@@ -240,7 +241,7 @@ class Level:
 
     def check_win(self):
         if pygame.sprite.spritecollide(self.player.sprite, self.goal, False):
-            self.game.move_to_next_level()
+            self.game.create_overworld(self.current_level, self.game.max_level, self.game.user_id, completed=True)
             self.level_complete_sound.play()
 
     def check_coin_collisions(self):

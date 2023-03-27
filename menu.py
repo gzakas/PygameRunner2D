@@ -4,14 +4,17 @@ import sys
 from highscore import Highscores
 from database import get_user_highscore_and_level
 
+
 class Menu:
-    def __init__(self, screen, title, options, create_overworld, option_functions, user_id):
+    def __init__(self, screen, title, options, create_overworld, option_functions, user_id, is_new_account=False, current_level=None):
         self.screen = screen
         self.title = title
         self.options = options
         self.option_functions = option_functions
         self.create_overworld = create_overworld
         self.user_id = user_id
+        self.is_new_account = is_new_account
+        self.current_level = current_level
         self.font = pygame.font.Font('sprites/ui/ARCADEPI.ttf', 80)
         self.font2 = pygame.font.Font('sprites/ui/ARCADEPI.ttf', 50)
         self.title_text = self.font.render(self.title, True, (0, 0, 0))

@@ -10,7 +10,7 @@ def create_database():
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         highscore INTEGER DEFAULT 0,
-        max_level INTEGER DEFAULT 1
+        max_level INTEGER DEFAULT 0
     );
     """)
 
@@ -23,17 +23,17 @@ def register_user(username, password):
 
     # Hash the password before storing it in the database
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
     try:
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
         conn.commit()
+        user_id = cursor.lastrowid
     except sqlite3.IntegrityError:
         print("Username already exists.")
-        return False
+        conn.close()
+        return False, None
 
     conn.close()
-    return True
-
+    return True, user_id
 
 def login_user(username, password):
     conn = sqlite3.connect("game.db")

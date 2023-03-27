@@ -1,6 +1,7 @@
 import pygame, sys
 from settings import *
 
+
 class Highscores:
     def __init__(self, screen, highscore, back_func):
         self.screen = screen

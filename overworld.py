@@ -5,6 +5,7 @@ from decoration import Sky
 from menu import Menu
 from pause import Pause
 
+
 class Node(pygame.sprite.Sprite):
 	def __init__(self,pos,status,icon_speed, path):
 		super().__init__()
@@ -32,6 +33,7 @@ class Node(pygame.sprite.Sprite):
 			tinted_surface = self.image.copy()
 			tinted_surface.fill('black', None, pygame.BLEND_RGBA_MULT)
 			self.image.blit(tinted_surface, (0, 0))
+
 
 class Icon(pygame.sprite.Sprite):
 	def __init__(self,pos):
@@ -79,7 +81,8 @@ class Overworld:
 		self.overworld_pause.update_paused_state(False)
 
 	def return_to_menu(self):
-		self.game.create_menu()
+		self.game.last_unlocked_level = self.current_level
+		self.game.create_menu(self.game.user_id, new_account=False, reset_progress=False)
 		self.overworld_pause.update_paused_state(False)
 
 	def setup_nodes(self):
@@ -115,10 +118,11 @@ class Overworld:
 				self.current_level -= 1
 				self.moving = True
 			elif keys[pygame.K_RETURN]:
-				self.create_level(self.current_level)
+				self.create_level(self.current_level, completed=False)
 			elif keys[pygame.K_ESCAPE]:
 				self.overworld_pause.is_paused = True
 				self.overworld_pause.run()
+				self.game.create_menu(self.game.user_id, self, reset_progress=False)
 
 	def get_movement_data(self,target):
 		start = pygame.math.Vector2(self.nodes.sprites()[self.current_level].rect.center)
